@@ -34,11 +34,25 @@ function BibleUI({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCommentaryOpen, setIsCommentaryOpen] = useState(false);
   const [commentary, setCommentary] = useState<string>("");
-  const geminiData = api.gemini.generateText.useMutation({
-    onSuccess: (data) => {
-      setCommentary(data.text);
+  const [shouldFetchCommentary, setShouldFetchCommentary] = useState(false);
+
+  const geminiData = api.gemini.generateText.useQuery(
+    {
+      prompt: `Explique o capítulo ${selectedChapter} do livro ${selectedBook?.name} da versão ${selectedVersion}`,
+      modelName: "gemini-1.5-flash",
     },
-  });
+    {
+      enabled: shouldFetchCommentary,
+    },
+  );
+
+  useEffect(() => {
+    if (geminiData.data && shouldFetchCommentary) {
+      setCommentary(geminiData.data.text);
+      setShouldFetchCommentary(false);
+    }
+  }, [geminiData.data, shouldFetchCommentary]);
+
   const versesData = api.bible.getChapter.useQuery({
     version: selectedVersion,
     abbrev: selectedBook?.abbrev?.pt ?? "gn",
@@ -193,7 +207,7 @@ function BibleUI({
                 <Select
                   value={selectedChapter.toString()}
                   onValueChange={(value) =>
-                    setSelectedChapter(Number.parseInt(value as string))
+                    setSelectedChapter(Number.parseInt(value))
                   }
                 >
                   <SelectTrigger className="w-[80px]">
@@ -215,10 +229,7 @@ function BibleUI({
                   className="gap-1"
                   onClick={() => {
                     setIsCommentaryOpen(true);
-                    geminiData.mutate({
-                      prompt: `Explique o capítulo ${selectedChapter} do livro ${selectedBook?.name} da versão ${selectedVersion}`,
-                      modelName: "gemini-1.5-flash",
-                    });
+                    setShouldFetchCommentary(true);
                   }}
                 >
                   Ajuda
@@ -256,7 +267,7 @@ function BibleUI({
               className="w-[300px] overflow-y-auto sm:w-[500px]"
             >
               <div className="py-4">
-                {geminiData.isPending ? (
+                {geminiData.isLoading ? (
                   <div>Loading...</div>
                 ) : (
                   <>

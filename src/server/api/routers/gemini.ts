@@ -29,7 +29,7 @@ export const geminiRouter = createTRPCRouter({
         modelName: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .query(async ({ input }) => {
       try {
         const model = getGeminiModel(input.modelName);
         const result = await model.generateContent(input.prompt);
@@ -50,7 +50,7 @@ export const geminiRouter = createTRPCRouter({
         modelName: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .query(async ({ input }) => {
       try {
         const model = getGeminiModel(input.modelName);
         // Create a non-streaming request instead to avoid type issues
@@ -76,7 +76,7 @@ export const geminiRouter = createTRPCRouter({
         modelName: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .query(async ({ input }) => {
       try {
         const model = getGeminiModel(input.modelName);
         const chat = model.startChat({
@@ -116,7 +116,7 @@ export const geminiRouter = createTRPCRouter({
         modelName: z.string().optional().default("gemini-1.5-pro-vision"),
       })
     )
-    .mutation(async ({ input }) => {
+    .query(async ({ input }) => {
       try {
         const model = getGeminiModel(input.modelName);
 
