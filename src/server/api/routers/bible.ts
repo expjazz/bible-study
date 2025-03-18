@@ -32,6 +32,9 @@ export const VerseSchema = z.object({
 export const ChapterSchema = z.object({
   book: BookSchema.extend({
     version: z.string(),
+  }).omit({
+    chapters: true,
+    testament: true,
   }),
   chapter: z.object({
     number: z.number(),
@@ -43,10 +46,18 @@ export const ChapterSchema = z.object({
 export const SingleVerseSchema = z.object({
   book: BookSchema.extend({
     version: z.string(),
+  }).omit({
+    chapters: true,
+    testament: true,
   }),
-  chapter: z.number(),
-  number: z.number(),
-  text: z.string(),
+  chapter: z.object({
+    number: z.number(),
+    verses: z.number(),
+  }),
+  verses: z.array(z.object({
+    number: z.number(),
+    text: z.string(),
+  })),
 });
 
 export const VersionSchema = z.object({
@@ -61,12 +72,12 @@ export const SearchResultSchema = z.object({
 });
 
 // Type definitions for API responses
-type BooksResponse = z.infer<typeof BookSchema>[];
-type BookResponse = z.infer<typeof BookDetailsSchema>;
-type ChapterResponse = z.infer<typeof ChapterSchema>;
-type VerseResponse = z.infer<typeof SingleVerseSchema>;
-type VersionsResponse = z.infer<typeof VersionSchema>[];
-type SearchResponse = z.infer<typeof SearchResultSchema>;
+export type BooksResponse = z.infer<typeof BookSchema>[];
+export type BookResponse = z.infer<typeof BookDetailsSchema>;
+export type ChapterResponse = z.infer<typeof ChapterSchema>;
+export type VerseResponse = z.infer<typeof SingleVerseSchema>;
+export type VersionsResponse = z.infer<typeof VersionSchema>[];
+export type SearchResponse = z.infer<typeof SearchResultSchema>;
 
 type UserResponse = {
   name: string;
@@ -137,13 +148,15 @@ export const bibleRouter = createTRPCRouter({
         version: z.string(),
         abbrev: z.string(),
         chapter: z.number(),
-        number: z.number(),
       }),
     )
-    .query(async ({ input }) => {
+    .query(async ({ input }) =>
+    {
+      console.log("aaaaaaaaaaaaaaaaaaaaaa", `/verses/${input.version}/${input.abbrev}/${input.chapter}`)
       const { data } = await bibleApiClient.get<VerseResponse>(
-        `/verses/${input.version}/${input.abbrev}/${input.chapter}/${input.number}`,
+        `/verses/${input.version}/${input.abbrev}/${input.chapter}`,
       );
+      console.log("aaaaaaaaaaaaaaaaaaaaaa resp", data)
       return SingleVerseSchema.parse(data);
     }),
 

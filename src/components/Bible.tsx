@@ -13,69 +13,39 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ChevronLeft, ChevronRight, Menu, Search } from "lucide-react";
+import { api } from "@/trpc/react";
+import { BooksResponse, ChapterResponse } from "@/server/api/routers/bible";
+import { VersionsResponse } from "@/server/api/routers/bible";
 
-// Bible data structure (simplified)
-const bibleVersions = ["KJV", "NIV", "ESV", "NKJV", "NLT"];
-
-const bibleBooks = [
-  // Old Testament
-  { id: "genesis", name: "Genesis", testament: "old", chapters: 50 },
-  { id: "exodus", name: "Exodus", testament: "old", chapters: 40 },
-  { id: "leviticus", name: "Leviticus", testament: "old", chapters: 27 },
-  // More Old Testament books would be added here
-
-  // New Testament
-  { id: "matthew", name: "Matthew", testament: "new", chapters: 28 },
-  { id: "mark", name: "Mark", testament: "new", chapters: 16 },
-  { id: "luke", name: "Luke", testament: "new", chapters: 24 },
-  { id: "john", name: "John", testament: "new", chapters: 21 },
-  { id: "acts", name: "Acts", testament: "new", chapters: 28 },
-  // More New Testament books would be added here
-];
-
-// Sample verse data for demonstration
-const sampleVerses = [
-  { number: 1, text: "In the beginning God created the heaven and the earth." },
-  {
-    number: 2,
-    text: "And the earth was without form, and void; and darkness was upon the face of the deep. And the Spirit of God moved upon the face of the waters.",
-  },
-  { number: 3, text: "And God said, Let there be light: and there was light." },
-  {
-    number: 4,
-    text: "And God saw the light, that it was good: and God divided the light from the darkness.",
-  },
-  {
-    number: 5,
-    text: "And God called the light Day, and the darkness he called Night. And the evening and the morning were the first day.",
-  },
-  // More verses would be added here
-];
-
-export default function BibleUI() {
-  const [selectedVersion, setSelectedVersion] = useState("KJV");
-  const [selectedBook, setSelectedBook] = useState(bibleBooks[0]);
+function BibleUI({
+  versions,
+  books,
+  initialChapter,
+}: {
+  versions: VersionsResponse;
+  books: BooksResponse;
+  initialChapter: ChapterResponse;
+}) {
+  const [selectedVersion, setSelectedVersion] = useState("nvi");
+  const [selectedBook, setSelectedBook] = useState(books[0]);
   const [selectedChapter, setSelectedChapter] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
+  const [verses, setVerses] = useState(initialChapter);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const oldTestamentBooks = bibleBooks.filter(
-    (book) => book.testament === "old",
-  );
-  const newTestamentBooks = bibleBooks.filter(
-    (book) => book.testament === "new",
-  );
+  const oldTestamentBooks = books.filter((book) => book.testament === "VT");
+  const newTestamentBooks = books.filter((book) => book.testament === "NT");
 
   const handlePreviousChapter = () => {
     if (selectedChapter > 1) {
       setSelectedChapter(selectedChapter - 1);
     } else {
       // Go to previous book, last chapter
-      const currentBookIndex = bibleBooks.findIndex(
-        (book) => book.id === selectedBook.id,
+      const currentBookIndex = books.findIndex(
+        (book) => book.name === selectedBook?.name,
       );
       if (currentBookIndex > 0) {
-        const previousBook = bibleBooks[currentBookIndex - 1];
+        const previousBook = books[currentBookIndex - 1];
         setSelectedBook(previousBook);
         setSelectedChapter(previousBook.chapters);
       }
@@ -87,24 +57,30 @@ export default function BibleUI() {
       setSelectedChapter(selectedChapter + 1);
     } else {
       // Go to next book, first chapter
-      const currentBookIndex = bibleBooks.findIndex(
-        (book) => book.id === selectedBook.id,
+      const currentBookIndex = books.findIndex(
+        (book) => book.name === selectedBook?.name,
       );
-      if (currentBookIndex < bibleBooks.length - 1) {
-        setSelectedBook(bibleBooks[currentBookIndex + 1]);
+      if (currentBookIndex < books.length - 1) {
+        setSelectedBook(books[currentBookIndex + 1]);
         setSelectedChapter(1);
       }
     }
   };
 
-  const BookList = ({ books, title }) => (
+  const BookList = ({
+    books,
+    title,
+  }: {
+    books: BooksResponse;
+    title: string;
+  }) => (
     <div className="mb-6">
       <h3 className="mb-2 text-lg font-semibold">{title}</h3>
       <div className="grid grid-cols-2 gap-1 sm:grid-cols-1">
         {books.map((book) => (
           <Button
-            key={book.id}
-            variant={selectedBook.id === book.id ? "secondary" : "ghost"}
+            key={book.name}
+            variant={selectedBook?.name === book.name ? "secondary" : "ghost"}
             className="h-8 justify-start"
             onClick={() => {
               setSelectedBook(book);
@@ -135,8 +111,11 @@ export default function BibleUI() {
               <div className="py-4">
                 <h2 className="mb-4 text-xl font-bold">Bible Books</h2>
                 <ScrollArea className="h-[calc(100vh-100px)]">
-                  <BookList books={oldTestamentBooks} title="Old Testament" />
-                  <BookList books={newTestamentBooks} title="New Testament" />
+                  <BookList
+                    books={oldTestamentBooks}
+                    title="Velho Testamento"
+                  />
+                  <BookList books={newTestamentBooks} title="Novo Testamento" />
                 </ScrollArea>
               </div>
             </SheetContent>
@@ -159,9 +138,9 @@ export default function BibleUI() {
               <SelectValue placeholder="Version" />
             </SelectTrigger>
             <SelectContent>
-              {bibleVersions.map((version) => (
-                <SelectItem key={version} value={version}>
-                  {version}
+              {versions.map((version) => (
+                <SelectItem key={version.version} value={version.version}>
+                  {version.version}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -192,7 +171,7 @@ export default function BibleUI() {
                   size="icon"
                   onClick={handlePreviousChapter}
                   disabled={
-                    selectedBook.id === bibleBooks[0].id &&
+                    selectedBook.name === books?.[0].name &&
                     selectedChapter === 1
                   }
                 >
@@ -224,7 +203,7 @@ export default function BibleUI() {
                   size="icon"
                   onClick={handleNextChapter}
                   disabled={
-                    selectedBook.id === bibleBooks[bibleBooks.length - 1].id &&
+                    selectedBook.name === books[books.length - 1].name &&
                     selectedChapter === selectedBook.chapters
                   }
                 >
@@ -236,7 +215,7 @@ export default function BibleUI() {
 
             {/* Verse content */}
             <div className="space-y-4">
-              {sampleVerses.map((verse) => (
+              {verses.verses.map((verse) => (
                 <div key={verse.number} className="flex">
                   <span className="text-muted-foreground mr-2 font-bold">
                     {verse.number}
@@ -249,5 +228,30 @@ export default function BibleUI() {
         </main>
       </div>
     </div>
+  );
+}
+
+export default function Bible() {
+  const versions = api.bible.getVersions.useQuery();
+  const books = api.bible.getBooks.useQuery();
+  const verses = api.bible.getChapter.useQuery({
+    version: "nvi",
+    abbrev: "gn",
+    chapter: 1,
+  });
+  if (versions.isLoading || books.isLoading || verses.isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!versions.data || !books.data || !verses.data) {
+    return <div>Error loading data</div>;
+  }
+  console.log(verses.data);
+  return (
+    <BibleUI
+      versions={versions.data}
+      books={books.data}
+      initialChapter={verses.data}
+    />
   );
 }
