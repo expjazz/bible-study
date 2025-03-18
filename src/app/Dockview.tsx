@@ -11,6 +11,7 @@ import {
 } from "dockview";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
+import Bible from "@/components/Bible";
 const Dockview = () => {
   const dockviewRef = useRef<DockviewApi>();
   const bibleCountRef = useRef(1);
@@ -19,7 +20,7 @@ const Dockview = () => {
     React.FunctionComponent<IDockviewPanelProps>
   > = {
     bible: () => {
-      return <p>Bible</p>;
+      return <Bible />;
     },
   };
   function onReady(event: DockviewReadyEvent) {
