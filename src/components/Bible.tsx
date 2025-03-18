@@ -30,9 +30,12 @@ function BibleUI({
   const [selectedBook, setSelectedBook] = useState(books[0]);
   const [selectedChapter, setSelectedChapter] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [verses, setVerses] = useState(initialChapter);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
+  const versesData = api.bible.getChapter.useQuery({
+    version: selectedVersion,
+    abbrev: selectedBook?.abbrev?.pt ?? "gn",
+    chapter: selectedChapter,
+  });
   const oldTestamentBooks = books.filter((book) => book.testament === "VT");
   const newTestamentBooks = books.filter((book) => book.testament === "NT");
 
@@ -215,7 +218,7 @@ function BibleUI({
 
             {/* Verse content */}
             <div className="space-y-4">
-              {verses.verses.map((verse) => (
+              {versesData.data?.verses.map((verse) => (
                 <div key={verse.number} className="flex">
                   <span className="text-muted-foreground mr-2 font-bold">
                     {verse.number}
