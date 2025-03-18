@@ -34,20 +34,17 @@ const Dockview = () => {
   }
   return (
     <>
-      <DockviewReact
-        className="dockview-theme-light"
-        components={components}
-        onReady={onReady}
-      />
+      <div className="relative max-h-[calc(100vh-10%)] w-full">
+        <DockviewReact
+          className="dockview-theme-light"
+          components={components}
+          onReady={onReady}
+        />
+      </div>
       <Button
         className="ml-4"
         onClick={() => {
           bibleCountRef.current += 1;
-          dockviewRef.current?.addPanel({
-            id: `bible_${bibleCountRef.current}`,
-            component: "bible",
-            title: `Biblia ${bibleCountRef.current}`,
-          });
         }}
       >
         Abrir Bíblia

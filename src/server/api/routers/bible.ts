@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import axios from "axios";
+import { bibleApiClient } from "@/lib/bibleApiClient";
 
-// Base URL for the ABibliaDigital API
-const API_BASE_URL = "https://www.abibliadigital.com.br/api";
+
 
 // Common types for the API
 export const BookAbbrevSchema = z.object({
@@ -104,14 +104,14 @@ type RequestsAmountResponse = {
 export const bibleRouter = createTRPCRouter({
   // Books endpoints
   getBooks: publicProcedure.query(async () => {
-    const { data } = await axios.get<BooksResponse>(`${API_BASE_URL}/books`);
+    const { data } = await bibleApiClient.get<BooksResponse>(`/books`);
     return z.array(BookSchema).parse(data);
   }),
 
   getBook: publicProcedure
     .input(z.object({ abbrev: z.string() }))
     .query(async ({ input }) => {
-      const { data } = await axios.get<BookResponse>(`${API_BASE_URL}/books/${input.abbrev}`);
+      const { data } = await bibleApiClient.get<BookResponse>(`/books/${input.abbrev}`);
       return BookDetailsSchema.parse(data);
     }),
 
@@ -125,8 +125,8 @@ export const bibleRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const { data } = await axios.get<ChapterResponse>(
-        `${API_BASE_URL}/verses/${input.version}/${input.abbrev}/${input.chapter}`,
+      const { data } = await bibleApiClient.get<ChapterResponse>(
+        `/verses/${input.version}/${input.abbrev}/${input.chapter}`,
       );
       return ChapterSchema.parse(data);
     }),
@@ -141,8 +141,8 @@ export const bibleRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const { data } = await axios.get<VerseResponse>(
-        `${API_BASE_URL}/verses/${input.version}/${input.abbrev}/${input.chapter}/${input.number}`,
+      const { data } = await bibleApiClient.get<VerseResponse>(
+        `/verses/${input.version}/${input.abbrev}/${input.chapter}/${input.number}`,
       );
       return SingleVerseSchema.parse(data);
     }),
@@ -150,8 +150,8 @@ export const bibleRouter = createTRPCRouter({
   getRandomVerse: publicProcedure
     .input(z.object({ version: z.string() }))
     .query(async ({ input }) => {
-      const { data } = await axios.get<VerseResponse>(
-        `${API_BASE_URL}/verses/${input.version}/random`,
+      const { data } = await bibleApiClient.get<VerseResponse>(
+        `/verses/${input.version}/random`,
       );
       return SingleVerseSchema.parse(data);
     }),
@@ -164,8 +164,8 @@ export const bibleRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const { data } = await axios.get<VerseResponse>(
-        `${API_BASE_URL}/verses/${input.version}/${input.abbrev}/random`,
+      const { data } = await bibleApiClient.get<VerseResponse>(
+        `/verses/${input.version}/${input.abbrev}/random`,
       );
       return SingleVerseSchema.parse(data);
     }),
@@ -178,7 +178,7 @@ export const bibleRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input }) => {
-      const { data } = await axios.post<SearchResponse>(`${API_BASE_URL}/verses/search`, {
+      const { data } = await bibleApiClient.post<SearchResponse>(`/verses/search`, {
         version: input.version,
         search: input.search,
       });
@@ -187,7 +187,7 @@ export const bibleRouter = createTRPCRouter({
 
   // Versions endpoint
   getVersions: publicProcedure.query(async () => {
-    const { data } = await axios.get<VersionsResponse>(`${API_BASE_URL}/versions`);
+    const { data } = await bibleApiClient.get<VersionsResponse>(`/versions`);
     return z.array(VersionSchema).parse(data);
   }),
 
@@ -202,7 +202,7 @@ export const bibleRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input }) => {
-      const { data } = await axios.post<UserResponse>(`${API_BASE_URL}/users`, input);
+      const { data } = await bibleApiClient.post<UserResponse>(`/users`, input);
       return z
         .object({
           name: z.string(),
@@ -221,11 +221,7 @@ export const bibleRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const { data } = await axios.get<UserResponse>(`${API_BASE_URL}/users/${input.email}`, {
-        headers: {
-          Authorization: `Bearer ${input.token}`,
-        },
-      });
+      const { data } = await bibleApiClient.get<UserResponse>(`/users/${input.email}`);
       return z
         .object({
           name: z.string(),
@@ -240,11 +236,7 @@ export const bibleRouter = createTRPCRouter({
   getUserStats: publicProcedure
     .input(z.object({ token: z.string() }))
     .query(async ({ input }) => {
-      const { data } = await axios.get<UserStatsResponse>(`${API_BASE_URL}/users/stats`, {
-        headers: {
-          Authorization: `Bearer ${input.token}`,
-        },
-      });
+      const { data } = await bibleApiClient.get<UserStatsResponse>(`/users/stats`);
       return z
         .object({
           lastLogin: z.string(),
@@ -266,7 +258,7 @@ export const bibleRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input }) => {
-      const { data } = await axios.put<UserResponse>(`${API_BASE_URL}/users/token`, input);
+      const { data } = await bibleApiClient.put<UserResponse>(`/users/token`, input);
       return z
         .object({
           name: z.string(),
@@ -286,10 +278,7 @@ export const bibleRouter = createTRPCRouter({
     )
     .mutation(async ({ input }) => {
       const { token, ...credentials } = input;
-      const { data } = await axios.delete<MessageResponse>(`${API_BASE_URL}/users`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const { data } = await bibleApiClient.delete<MessageResponse>(`/users`, {
         data: credentials,
       });
       return z
@@ -302,8 +291,8 @@ export const bibleRouter = createTRPCRouter({
   resendPassword: publicProcedure
     .input(z.object({ email: z.string().email() }))
     .mutation(async ({ input }) => {
-      const { data } = await axios.post<MessageResponse>(
-        `${API_BASE_URL}/users/password/${input.email}`,
+      const { data } = await bibleApiClient.post<MessageResponse>(
+        `/users/password/${input.email}`,
       );
       return z
         .object({
@@ -321,11 +310,7 @@ export const bibleRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const { data } = await axios.get<RequestsResponse>(`${API_BASE_URL}/requests/${input.range}`, {
-        headers: {
-          Authorization: `Bearer ${input.token}`,
-        },
-      });
+      const { data } = await bibleApiClient.get<RequestsResponse>(`/requests/${input.range}`);
       return z
         .array(
           z.object({
@@ -344,13 +329,8 @@ export const bibleRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      const { data } = await axios.get<RequestsAmountResponse>(
-        `${API_BASE_URL}/requests/amount/${input.range}`,
-        {
-          headers: {
-            Authorization: `Bearer ${input.token}`,
-          },
-        },
+      const { data } = await bibleApiClient.get<RequestsAmountResponse>(
+        `/requests/amount/${input.range}`,
       );
       return z
         .object({
