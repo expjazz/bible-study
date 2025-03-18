@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 "use client";
 
 import { useState } from "react";
@@ -50,13 +51,13 @@ function BibleUI({
       if (currentBookIndex > 0) {
         const previousBook = books[currentBookIndex - 1];
         setSelectedBook(previousBook);
-        setSelectedChapter(previousBook.chapters);
+        setSelectedChapter(previousBook?.chapters ?? 0);
       }
     }
   };
 
   const handleNextChapter = () => {
-    if (selectedChapter < selectedBook.chapters) {
+    if (selectedChapter < (selectedBook?.chapters ?? 0)) {
       setSelectedChapter(selectedChapter + 1);
     } else {
       // Go to next book, first chapter
@@ -123,17 +124,18 @@ function BibleUI({
               </div>
             </SheetContent>
           </Sheet>
-          <h1 className="text-xl font-bold">Bible Reader</h1>
+          <h1 className="text-xl font-bold"> Biblia</h1>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative hidden md:flex">
             <Search className="text-muted-foreground absolute left-2.5 top-2.5 h-4 w-4" />
             <Input
               type="search"
-              placeholder="Search..."
+              placeholder="Pesquisar..."
               className="w-[200px] pl-8"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+              onChange={(e) => setSearchQuery(e.currentTarget.value)}
             />
           </div>
           <Select value={selectedVersion} onValueChange={setSelectedVersion}>
@@ -155,8 +157,8 @@ function BibleUI({
         {/* Sidebar - Hidden on mobile */}
         <aside className="hidden w-[240px] border-r p-4 md:block">
           <ScrollArea className="h-[calc(100vh-100px)]">
-            <BookList books={oldTestamentBooks} title="Old Testament" />
-            <BookList books={newTestamentBooks} title="New Testament" />
+            <BookList books={oldTestamentBooks} title="Velho Testamento" />
+            <BookList books={newTestamentBooks} title="Novo Testamento" />
           </ScrollArea>
         </aside>
 
@@ -166,7 +168,7 @@ function BibleUI({
             {/* Chapter navigation */}
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-2xl font-bold">
-                {selectedBook.name} {selectedChapter}
+                {selectedBook?.name} {selectedChapter}
               </h2>
               <div className="flex items-center gap-2">
                 <Button
@@ -174,7 +176,7 @@ function BibleUI({
                   size="icon"
                   onClick={handlePreviousChapter}
                   disabled={
-                    selectedBook.name === books?.[0].name &&
+                    selectedBook?.name === books?.[0]?.name &&
                     selectedChapter === 1
                   }
                 >
@@ -184,7 +186,7 @@ function BibleUI({
                 <Select
                   value={selectedChapter.toString()}
                   onValueChange={(value) =>
-                    setSelectedChapter(Number.parseInt(value))
+                    setSelectedChapter(Number.parseInt(value as string))
                   }
                 >
                   <SelectTrigger className="w-[80px]">
@@ -192,7 +194,7 @@ function BibleUI({
                   </SelectTrigger>
                   <SelectContent>
                     {Array.from(
-                      { length: selectedBook.chapters },
+                      { length: selectedBook?.chapters ?? 0 },
                       (_, i) => i + 1,
                     ).map((chapter) => (
                       <SelectItem key={chapter} value={chapter.toString()}>
@@ -206,8 +208,8 @@ function BibleUI({
                   size="icon"
                   onClick={handleNextChapter}
                   disabled={
-                    selectedBook.name === books[books.length - 1].name &&
-                    selectedChapter === selectedBook.chapters
+                    selectedBook?.name === books?.[books.length - 1]?.name &&
+                    selectedChapter === selectedBook?.chapters
                   }
                 >
                   <ChevronRight className="h-4 w-4" />
@@ -246,10 +248,9 @@ export default function Bible() {
     return <div>Loading...</div>;
   }
 
-  if (!versions.data || !books.data || !verses.data) {
+  if (!versions.data || !books.data?.length || !verses.data) {
     return <div>Error loading data</div>;
   }
-  console.log(verses.data);
   return (
     <BibleUI
       versions={versions.data}
