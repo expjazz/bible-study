@@ -38,7 +38,11 @@ function BibleUI({
 
   const geminiData = api.gemini.generateText.useQuery(
     {
-      prompt: `Explique o capítulo ${selectedChapter} do livro ${selectedBook?.name} da versão ${selectedVersion}`,
+      prompt: `Forneça um breve comentário sobre ${selectedBook?.name} ${selectedChapter} da Bíblia. Inclua os seguintes aspectos em formato markdown com títulos e parágrafos curtos (máximo 250 palavras total):
+      1. **Contexto histórico** - breve contexto do capítulo
+      2. **Principais visoes teologicas** - 2-3 pontos principais
+      3. **applicação no contexto do livro, aonde essa historia se encaixa no livro** - breve explicação
+      Responda sempre com markdown formatado corretamente.`,
       modelName: "gemini-1.5-flash",
     },
     {
@@ -268,11 +272,66 @@ function BibleUI({
             >
               <div className="py-4">
                 {geminiData.isLoading ? (
-                  <div>Loading...</div>
+                  <div className="flex h-40 items-center justify-center">
+                    <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2 border-t-2"></div>
+                  </div>
                 ) : (
                   <>
-                    <h2 className="mb-4 text-xl font-bold">Comentario</h2>
-                    <div className="space-y-6">{commentary}</div>
+                    <h2 className="mb-4 text-xl font-bold">
+                      Comentário sobre {selectedBook?.name} {selectedChapter}
+                    </h2>
+                    <div className="prose prose-sm dark:prose-invert max-w-none space-y-4">
+                      {commentary.split("\n").map((paragraph, index) => {
+                        // Handle markdown headers
+                        if (paragraph.startsWith("# ")) {
+                          return (
+                            <h1 key={index} className="mt-4 text-xl font-bold">
+                              {paragraph.substring(2)}
+                            </h1>
+                          );
+                        } else if (paragraph.startsWith("## ")) {
+                          return (
+                            <h2 key={index} className="mt-3 text-lg font-bold">
+                              {paragraph.substring(3)}
+                            </h2>
+                          );
+                        } else if (paragraph.startsWith("### ")) {
+                          return (
+                            <h3 key={index} className="text-md mt-2 font-bold">
+                              {paragraph.substring(4)}
+                            </h3>
+                          );
+                        } else if (
+                          paragraph.startsWith("**") &&
+                          paragraph.endsWith("**")
+                        ) {
+                          // Handle bold text as section headers
+                          return (
+                            <h4 key={index} className="mt-2 font-semibold">
+                              {paragraph.substring(2, paragraph.length - 2)}
+                            </h4>
+                          );
+                        } else if (paragraph.trim() === "") {
+                          // Skip empty paragraphs
+                          return null;
+                        } else {
+                          return (
+                            <p
+                              key={index}
+                              className="text-muted-foreground text-sm"
+                            >
+                              {paragraph}
+                            </p>
+                          );
+                        }
+                      })}
+                    </div>
+                    <div className="mt-6 border-t pt-4">
+                      <p className="text-muted-foreground text-xs">
+                        Este comentário foi gerado por IA e serve apenas como
+                        referência inicial para estudo.
+                      </p>
+                    </div>
                   </>
                 )}
               </div>
