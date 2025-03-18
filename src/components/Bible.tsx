@@ -253,16 +253,19 @@ function BibleUI({
               </div>
             </div>
 
-            {/* Verse content */}
-            <div className="space-y-4">
-              {versesData.data?.verses.map((verse) => (
-                <div key={verse.number} className="flex">
-                  <span className="text-muted-foreground mr-2 font-bold">
-                    {verse.number}
-                  </span>
-                  <p>{verse.text}</p>
+            <div className="border-muted rounded-md border">
+              <ScrollArea className="h-[calc(100vh-220px)]">
+                <div className="space-y-4 p-4">
+                  {versesData.data?.verses.map((verse) => (
+                    <div key={verse.number} className="flex">
+                      <span className="text-muted-foreground mr-2 font-bold">
+                        {verse.number}
+                      </span>
+                      <p>{verse.text}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </ScrollArea>
             </div>
           </div>
           <Sheet open={isCommentaryOpen} onOpenChange={setIsCommentaryOpen}>
