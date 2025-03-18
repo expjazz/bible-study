@@ -1,11 +1,12 @@
 "use client";
 import "../../node_modules/dockview/dist/styles/dockview.css";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   DockviewApi,
   DockviewGroupPanelApi,
   DockviewPanelApi,
+  themeLight,
   DockviewReact,
   DockviewReadyEvent,
   IDockviewPanelProps,
@@ -14,6 +15,7 @@ import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import Bible from "@/components/Bible";
 const Dockview = () => {
+  const [loading, setLoading] = useState(true);
   const dockviewRef = useRef<DockviewApi>();
   const bibleCountRef = useRef(1);
   const components: Record<
@@ -32,11 +34,13 @@ const Dockview = () => {
       title: `Biblia ${bibleCountRef.current}`,
     });
     dockviewRef.current = api;
+    setLoading(false);
   }
+
   return (
-    <div className="relative max-h-[calc(100vh-10%)] w-full">
+    <div className="relative h-[calc(100vh-10%)] w-full">
       <DockviewReact
-        className="dockview-theme-light"
+        theme={themeLight}
         components={components}
         onReady={onReady}
       />
