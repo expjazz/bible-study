@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -32,6 +32,13 @@ function BibleUI({
   const [selectedChapter, setSelectedChapter] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCommentaryOpen, setIsCommentaryOpen] = useState(false);
+  const [commentary, setCommentary] = useState<string>("");
+  const geminiData = api.gemini.generateText.useMutation({
+    onSuccess: (data) => {
+      setCommentary(data.text);
+    },
+  });
   const versesData = api.bible.getChapter.useQuery({
     version: selectedVersion,
     abbrev: selectedBook?.abbrev?.pt ?? "gn",
@@ -205,6 +212,19 @@ function BibleUI({
                 </Select>
                 <Button
                   variant="outline"
+                  className="gap-1"
+                  onClick={() => {
+                    setIsCommentaryOpen(true);
+                    geminiData.mutate({
+                      prompt: `Explique o capítulo ${selectedChapter} do livro ${selectedBook?.name} da versão ${selectedVersion}`,
+                      modelName: "gemini-1.5-flash",
+                    });
+                  }}
+                >
+                  Ajuda
+                </Button>
+                <Button
+                  variant="outline"
                   size="icon"
                   onClick={handleNextChapter}
                   disabled={
@@ -230,6 +250,17 @@ function BibleUI({
               ))}
             </div>
           </div>
+          <Sheet open={isCommentaryOpen} onOpenChange={setIsCommentaryOpen}>
+            <SheetContent
+              side="right"
+              className="w-[300px] overflow-y-auto sm:w-[500px]"
+            >
+              <div className="py-4">
+                <h2 className="mb-4 text-xl font-bold">Comentario</h2>
+                <div className="space-y-6">{commentary}</div>
+              </div>
+            </SheetContent>
+          </Sheet>
         </main>
       </div>
     </div>
