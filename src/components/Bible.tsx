@@ -256,8 +256,14 @@ function BibleUI({
               className="w-[300px] overflow-y-auto sm:w-[500px]"
             >
               <div className="py-4">
-                <h2 className="mb-4 text-xl font-bold">Comentario</h2>
-                <div className="space-y-6">{commentary}</div>
+                {geminiData.isPending ? (
+                  <div>Loading...</div>
+                ) : (
+                  <>
+                    <h2 className="mb-4 text-xl font-bold">Comentario</h2>
+                    <div className="space-y-6">{commentary}</div>
+                  </>
+                )}
               </div>
             </SheetContent>
           </Sheet>
